@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script type="module">
+            import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
+            createApp({
+                data() {
+                    return {
+                        message: 'Hello Vue!',
+                        seen: true,
+                        list: ["milk", "coffee", "water"]
+                    }
+                },
+                methods: {
+                    DoSomething:doSomething
+                }
+            }).mount('#app')
+            
+            function doSomething(){
+                console.log("Hello");
+            }
+        </script>
+    </head>
+    <body>
+        <div id="app">
+            <p>{{ message }}</p>
+            <input v-model="message" placeholder="placeholder">
+        </div>
+    </body>
+</html>

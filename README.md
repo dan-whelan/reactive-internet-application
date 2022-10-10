@@ -14,3 +14,9 @@ Server implementation:
 <ul>
 <li>A Server-side application which exposes at least one API primitive and consumes the services of openweather API</li>
 </ul>
+
+## Dependencies
+Run npm install to install all dependencies
+ ```bash
+ npm install
+ ```

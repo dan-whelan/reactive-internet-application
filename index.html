@@ -1,30 +1,71 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <script type="module">
-            import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
-            createApp({
-                data() {
-                    return {
-                        message: 'Hello Vue!',
-                        seen: true,
-                        list: ["milk", "coffee", "water"]
-                    }
-                },
-                methods: {
-                    DoSomething:doSomething
-                }
-            }).mount('#app')
-            
-            function doSomething(){
-                console.log("Hello");
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+<div id="app">
+  <h1>Weather Finder Outer</h1><br>
+  <p>This is a weather app that returns information for the weather forecast over the next 5 days of a chosen city</p><br>
+  <p>Please enter the name of the city below and press the <strong>ENTER</strong> key when finished</p><br>
+  <p><em>NB If the city consists of two words please replace the spaces with a dash, e.g. New York becomes New-York</em></p><br>
+  <input v-model="cityName" @keyup.enter="getWeather"><br>
+  <template v-if="seen">
+    <span>{{ summaryResult }}</span>
+    <span v-for="item in daySummarys">{{ item }}</span>
+  </template>
+</div>
+
+<script>
+  const { createApp } = Vue;
+
+  createApp({
+    data() {
+      return {
+        cityName: 'Dublin',
+        summaryResult: 'Hello There!',
+        daySummarys: [],
+        seen: false,
+        numberDays: 5,
+        numberTimePeriods: 3
+      }
+    },
+    methods: {
+      async getWeather() {
+          try {
+            let response = await fetch(`http://localhost:3000/weather/${this.cityName}`, {
+              mode:"cors"
+            });
+            if(!response.ok) {
+              const message = `An error occurred ${response.status} - ${response.statusText}`;
+              throw new Error(message);
             }
-        </script>
-    </head>
-    <body>
-        <div id="app">
-            <p>{{ message }}</p>
-            <input v-model="message" placeholder="placeholder">
-        </div>
-    </body>
-</html>
+            let weatherJson = await response.json();
+            this.formatWeather(weatherJson);
+            this.seen = true;
+          } catch (error) {
+            console.log(error);
+          }
+      },
+      formatWeather(weatherJson) {
+        this.summaryResult = this.getSummary(weatherJson);
+        for(let i = 0; i < this.numberDays; i++) {
+          this.daySummarys.push(this.getDailyTableItem(weatherJson));
+        }
+      },
+      getSummary(weatherJson) {
+        const rainForecast = this.isRain(weatherJson);
+        const avgTemperature = this.getAverageTemperature(weatherJson);
+      },
+      getDailyTableItem(weatherJson) {
+
+      },
+      isRain(weatherJson) {
+        for(let i = 0; i < this.numberDays; i++) {
+          for(let j = 0; j < this.numberTimePeriods; j++) {
+            
+          }
+        }
+      },
+      getAverageTemperature(weatherJson) {
+
+      }
+    }
+  }).mount('#app');
+</script>

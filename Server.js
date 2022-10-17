@@ -7,21 +7,27 @@ const cors = require("cors");
 //set up express server
 const application = express();
 const port = 3000;
-const apiKey = "57ad7a485e738ee8fce6a4c886376c48" // <- Input openweathermap.org api key here.
+const apiKey = "" // <- Input openweathermap.org api key here.
 
 // values relating to information regarding days.
 const numEntriesPerDay = 8;
-const numDays = 5;
+const numDays = 4;
 const numEntriesInAllDays = numEntriesPerDay*numDays
 const numEntriesPerHalfDay = (numEntriesPerDay/2)-1
 
 const weatherMap = new Map();
 
 // Take Json from openweather and convert to Response Map
-const formatWeatherJson = async (weatherJson) => {
+const formatWeatherJson = async (weatherJson, aqiJson) => {
+    const weatherArray = [];
+    let index = 0;
     for(let i = 0; i < numEntriesInAllDays; i += numEntriesPerDay) {
-        weatherMap.set(`day_${(i/numEntriesPerDay)+1}`, getDailyInfo(i, weatherJson));
+        weatherArray[index] = toJson(getDailyInfo(i, weatherJson));
+        index++;
     }
+    weatherMap.set("city_and_country", parseCityAndCountry(weatherJson));
+    weatherMap.set("days", weatherArray);
+    weatherMap.set("AQI", parseAQI(aqiJson));
     return weatherMap;
 }
 
@@ -32,6 +38,7 @@ const getDailyInfo = (index, weatherJson) => {
     dayMap.set("wind", getWindInfo(index, weatherJson));
     dayMap.set("weather", getWeatherInfo(index, weatherJson));
     dayMap.set("cloud_coverage", getCloudInfo(index, weatherJson));
+    dayMap.set("rainfall", getRainfallLevel(index, weatherJson))
 
     return dayMap;
 }
@@ -93,31 +100,31 @@ const getWindInfo = (index, weatherJson) => {
 // Get Weather Information
 const getWeatherInfo = (index, weatherJson) => {
     // - Weather type and description
-    const dailyWeather = new Map();
+    const weatherArray = [];
     const morningMap = new Map();
     const afternoonMap = new Map();
     const eveningMap = new Map();
 
-    dailyWeather.set("morning", morningMap.set(
+    morningMap.set(
             "type", weatherJson.list[index].weather[0].main
         ).set(
             "description", weatherJson.list[index].weather[0].description
-        )
-    ).set(
-        "afternoon", afternoonMap.set(
+        );
+    afternoonMap.set(
             "type", weatherJson.list[index+numEntriesPerHalfDay].weather[0].main
         ).set(
             "description", weatherJson.list[index+numEntriesPerHalfDay].weather[0].description
-        )
-    ).set(
-        "evening", eveningMap.set(
+        );
+    eveningMap.set(
             "type", weatherJson.list[index+(numEntriesPerDay-1)].weather[0].main
         ).set(
             "description", weatherJson.list[index+(numEntriesPerDay-1)].weather[0].description
-        )
-    );
-
-    return dailyWeather;
+        );
+    
+    weatherArray[0] = toJson(morningMap);
+    weatherArray[1] = toJson(afternoonMap);
+    weatherArray[2] = toJson(eveningMap);
+    return weatherArray;
 }
 
 // Get Cloud Information
@@ -134,17 +141,26 @@ const getCloudInfo = (index, weatherJson) => {
     return cloudCoverage;
 }
 // Get Rainfall level average
-// const getRainfallLevel = (index, weatherJson) => {
-//     let rainfallLevel = 0;
-//     for(let i = index; i < (index+numEntriesPerDay); i++) {
-//         rainfallLevel += weatherJson.list[i].rain.3h;
-//         if(i === (index+numEntriesPerDay)-1) {
-//             rainfallLevel /= numEntriesPerDay;
-//         }
-//     }
-    
-//     return rainfallLevel;
-// }
+const getRainfallLevel = (index, weatherJson) => {
+    let rainfallLevel = 0;
+    for(let i = index; i < (index+numEntriesPerDay); i++) {
+        rainfallLevel += (weatherJson.list[i].rain) ? weatherJson.list[i].rain['3h'] : 0
+        if(i === (index+numEntriesPerDay)-1) {
+            rainfallLevel /= numEntriesPerDay;
+        }
+    }
+    return rainfallLevel;
+}
+
+// Get AQI information
+const parseAQI = (aqiJson) => {
+    return aqiJson.list[0].components.pm2_5;
+}
+
+// Get City and Country info
+const parseCityAndCountry = (weatherJson) => {
+    return `${weatherJson.city.name}, ${weatherJson.city.country}`;
+}
 
 // Convert from Map to Json
 const toJson = (map = new Map) =>
@@ -169,8 +185,12 @@ application.get("/weather/:cityName", cors(), async (req, res) => {
             await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${locationJson[0].lat}&lon=${locationJson[0].lon}&appId=${apiKey}&units=metric`);
         const weatherJson = await weather.json();
         console.log("weather parsed");
-        const formattedWeatherMap = await formatWeatherJson(weatherJson);
-        console.log("weather formatted");
+        const aqi = 
+            await fetch(`https://api.openweathermap.org/data/2.5/air_pollution/forecast?lat=${locationJson[0].lat}&lon=${locationJson[0].lon}&appId=${apiKey}`);
+        const aqiJson = await aqi.json();
+        console.log("AQI Parsed");
+        let formattedWeatherMap = await formatWeatherJson(weatherJson, aqiJson);
+        console.log("weather formatted");        
         res.status(200).json(toJson(formattedWeatherMap));
         console.log("Response Sent");
     } catch (err) {

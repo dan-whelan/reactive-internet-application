@@ -6,24 +6,53 @@
   <p>Please enter the name of the city below and press the <strong>ENTER</strong> key when finished</p><br>
   <p><em>NB If the city consists of two words please replace the spaces with a dash, e.g. New York becomes New-York</em></p><br>
   <input v-model="cityName" @keyup.enter="getWeather"><br>
+
   <template v-if="seen">
-    <span>{{ summaryResult }}</span>
-    <span v-for="item in daySummarys">{{ item }}</span>
+
+    <hr>
+
+    <h2>{{ cityAndCountry }}</h2>
+
+    <ul>
+      <li>{{ rainForecast }}</li>
+      <li><p>The Temperature for your trip is going to be {{ temperatureForecast }}</p></li>
+      <li>{{ aqiStatus }}</li>
+    </ul>
+    <p>The Summary Forecast for each day is:</p>
+    <ul v-for="(item, index) in daySummarys">
+      <li><p>Day - {{ index + 1}}</p></li>
+      <ul>
+        <li><p>Temperature:</p></li>
+        <ul v-for="temperature in dailyTemperatureSummary">
+          <li>{{ temperature }}</li>
+        </ul><br>
+      </ul>
+      <ul v-for="value in item">
+        <li>{{ value }}</li>
+      </ul>
+    </ul>
   </template>
 </div>
 
 <script>
   const { createApp } = Vue;
+  const mildLowBound = 12;
+  const mildUpperBound = 24;
 
   createApp({
     data() {
       return {
-        cityName: 'Dublin',
+        cityName: 'Portlaoise',
         summaryResult: 'Hello There!',
         daySummarys: [],
+        dailyTemperatureSummary: [],
         seen: false,
-        numberDays: 5,
-        numberTimePeriods: 3
+        numberDays: 4,
+        numberTimePeriods: 3,
+        cityAndCountry: "Cork, IE",
+        rainForecast: "Null",
+        temperatureForecast: "Null",
+        aqiStatus: "Null"
       }
     },
     methods: {
@@ -37,6 +66,7 @@
               throw new Error(message);
             }
             let weatherJson = await response.json();
+            console.log(weatherJson);
             this.formatWeather(weatherJson);
             this.seen = true;
           } catch (error) {
@@ -46,25 +76,69 @@
       formatWeather(weatherJson) {
         this.summaryResult = this.getSummary(weatherJson);
         for(let i = 0; i < this.numberDays; i++) {
-          this.daySummarys.push(this.getDailyTableItem(weatherJson));
+          this.daySummarys.push(this.getDailyTableItem(i, weatherJson));
         }
+        console.log(this.daySummarys);
       },
       getSummary(weatherJson) {
+        //Get City and Country Name
+        this.cityAndCountry = this.getCityAndCountry(weatherJson);
+
         const rainForecast = this.isRain(weatherJson);
         const avgTemperature = this.getAverageTemperature(weatherJson);
-      },
-      getDailyTableItem(weatherJson) {
+        const aqiStatus = this.isAQIHigh(weatherJson);
 
+        // Determine Rain Response
+        this.rainForecast = (rainForecast) ? "Rain on the way! Pack a brolly!" : "No Rain is coming! No need for a brolly this time!";
+
+        // Determine type of temperature
+        if(avgTemperature < mildLowBound) this.temperatureForecast = "Cold";
+        else if(avgTemperature >= mildLowBound && avgTemperature <= mildUpperBound) this.temperatureForecast = "Mild";
+        else this.temperatureForecast = "Hot";
+
+        // Determine AQI status
+        this.aqiStatus = (aqiStatus) 
+            ? "The Air Pollution is forecast to be high! It's recommended you wear a mask"
+            : "The Air Pollution is forecast to be low! No need for a mask going here";
+      },
+      getDailyTableItem(index, weatherJson) {
+        let dayTable = [];
+        this.getTemperatureInfo(weatherJson.days[index].temperature);
+        dayTable.push(`Wind Speed: ${weatherJson.days[index].wind}km/hr`);
+        dayTable.push(`Cloud Coverage: ${weatherJson.days[index].cloud_coverage}%`);
+        dayTable.push(`Rainfall Level: ${weatherJson.days[index].rainfall}mm`);
+        return dayTable;
+      },
+      getTemperatureInfo(temperature) {
+        let temperatureInfo = [];
+        temperatureInfo.push(`Average Temperature: ${temperature.avg_temp}°C`);
+        temperatureInfo.push(`Maximum Temperature: ${temperature.max_temp}°C`);
+        temperatureInfo.push(`Minimum Temperature: ${temperature.min_temp}°C`);
+        temperatureInfo.push(`Humidity: ${temperature.humidity}%`);
+        this.dailyTemperatureSummary = temperatureInfo;
       },
       isRain(weatherJson) {
         for(let i = 0; i < this.numberDays; i++) {
           for(let j = 0; j < this.numberTimePeriods; j++) {
-            
+            if(weatherJson.days[i].weather[j].type === "Rain")
+              return true;
           }
         }
+        return false;
       },
       getAverageTemperature(weatherJson) {
-
+        let avgTemperature = 0;
+        for(let i = 0; i < this.numberDays; i++) {
+          avgTemperature += weatherJson.days[i].temperature.avg_temp
+        }
+        return (avgTemperature/this.numberDays);
+      },
+      isAQIHigh(weatherJson) {
+        let aqi = weatherJson.AQI;
+        return (aqi > 10) ? true : false;
+      },
+      getCityAndCountry(weatherJson) {
+        return weatherJson.city_and_country;
       }
     }
   }).mount('#app');

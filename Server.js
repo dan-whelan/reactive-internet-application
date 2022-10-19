@@ -152,9 +152,13 @@ const getRainfallLevel = (index, weatherJson) => {
     return rainfallLevel;
 }
 
-// Get AQI information
+// Get AQI average TODO
 const parseAQI = (aqiJson) => {
-    return aqiJson.list[0].components.pm2_5;
+    let averageAQI = 0
+    for(let i = 0; i < aqiJson.list.length; i++) {
+        averageAQI += aqiJson.list[i].components.pm2_5;
+    }
+    return averageAQI/aqiJson.list.length;
 }
 
 // Get City and Country info
@@ -164,8 +168,8 @@ const parseCityAndCountry = (weatherJson) => {
 
 // Convert from Map to Json
 const toJson = (map = new Map) =>
-    Object.fromEntries
-        ( Array.from
+    Object.fromEntries( 
+        Array.from
             ( map.entries()
             , ([ k, v ]) =>
                 v instanceof Map

@@ -1,0 +1,32 @@
+.input {
+    margin: auto;
+    width: 100%;
+    text-align: center;
+    font-family: 'Gill Sans';
+    font-size: 20px;
+    color: gray;
+    border: none;
+    padding: 1rem;
+    border-radius: 1rem;
+    background: linear-gradient(145deg, #681fd4, #7b24fd);
+    box-shadow: 10px 10px 40px black,
+                -10px -10px 40px #932cff;
+    transition: 0.3s;
+}
+   
+.input:hover {
+    outline-color: linear-gradient(145deg, #681fd4, #7b24fd);
+    background: linear-gradient(145deg, #681fd4, #7b24fd);
+    box-shadow: inset 20px 20px 60px #5318aa,
+                inset -20px -20px 60px #932cff;
+    transition: 0.3s;
+}
+
+.input:focus {
+    outline-color: linear-gradient(145deg, #681fd4, #7b24fd);
+    background: linear-gradient(145deg, #681fd4, #7b24fd);
+    color: white;
+    box-shadow: inset 20px 20px 60px #5318aa,
+                inset -20px -20px 60px #932cff;
+    transition: 0.3s;
+}

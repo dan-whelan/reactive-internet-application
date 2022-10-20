@@ -1,84 +1,133 @@
 <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<link rel="stylesheet" href="./styles/button.css">
+<link rel="stylesheet" href="./styles/input.css">
+<link rel="stylesheet" href="./styles/styles.css">
 
-<div id="app">
-  <h1>Weather Finder Outer</h1><br>
-  <p>This is a weather app that returns information for the weather forecast over the next 5 days of a chosen city</p><br>
-  <p>Please enter the name of the city below and press the <strong>ENTER</strong> key when finished</p><br>
-  <p><em>NB If the city consists of two words please replace the spaces with a dash, e.g. New York becomes New-York</em></p><br>
-  <input v-model="cityName" @keyup.enter="getWeather"><br>
+<body>
+  <div id="app">
+    <h1 class="headers">Weather Finder Outer</h1><br>
+    <div class="box-div">
+      <p class="p1"><br>This is a weather app that returns information for the weather forecast over the next 5 days of a chosen city<br>
+        <br>
+        Please enter the name of the city below and press the <strong>ENTER</strong> key when finished<br>
+        <br>
+    </div>
+    <br>
+    <input v-model="cityName" @keyup.enter="getWeather" class="input"><br>
+    <div>
+      <template v-if="seen" id="container">
+        <br>
+        <h2 class="headers">{{ cityAndCountry }}</h2>
+        <br>
+        <div class="summary">
+          <div class="box-div3">
+            <p class="p2">{{ rainForecast }}</p>
+          </div>
+          <div class="box-div3">
+            <p class="p2">The Temperature for your trip is going to be {{ temperatureForecast }}</p>
+          </div>
+          <div class="box-div3">
+            <p class="p2">{{ aqiStatus }}</p>
+          </div>
+        </div>
 
-  <template v-if="seen">
-
-    <hr>
-
-    <h2>{{ cityAndCountry }}</h2>
-
-    <ul>
-      <li>{{ rainForecast }}</li>
-      <li><p>The Temperature for your trip is going to be {{ temperatureForecast }}</p></li>
-      <li>{{ aqiStatus }}</li>
-    </ul>
-    <p>The Summary Forecast for each day is:</p>
-    <ul v-for="(item, index) in daySummarys">
-      <li><p>Day - {{ index + 1}}</p></li>
-      <ul>
-        <li><p>Temperature:</p></li>
-        <ul v-for="temperature in dailyTemperatureSummary">
-          <li>{{ temperature }}</li>
-        </ul><br>
-      </ul>
-      <ul v-for="value in item">
-        <li>{{ value }}</li>
-      </ul>
-    </ul>
-  </template>
-</div>
+        <h2 class="h2">The Summary Forecast for each day is:</h2>
+        <div class="wrapper">
+          <ul v-for="(item, index) in daySummarys" class="p1">
+            <div class="box-div2">
+              <div class="date-text">
+                <p >{{ dates[index] }}</p>
+              </div>
+              <ul v-for="value in item">
+                <li>{{ value }}</li>
+              </ul>
+              <br>
+            </div>
+          </ul>
+        </div>
+        <br>
+        
+        <!-- Innovative and Inspiring feature at its finest! -->
+        <div class="box-div">
+          <br>
+          <p class="p1">Would you like a Joke? It is guaranteed to make you laugh!<br>(No refunds if it does not)</p>
+          <br>
+          <button @click="getJoke" class="button">Click Here for Laughs</button><br>
+          <template v-if="isJoke"><br>
+            <span>{{ setup }}<p>    </p></span>
+            <button @click="seePunchline = !seePunchline" class="button">Punchline</button><br>
+            <template v-if="seePunchline">
+              <br><em>{{ punchline }}</em>
+            </template><br>
+          </template>
+          <template v-else="isJoke">
+            <p>Boring, No Joke For You</p>
+          </template>
+          <br>
+        <div>
+      </template>
+    </div>
+  </div>
+</body>
 
 <script>
   const { createApp } = Vue;
   const mildLowBound = 12;
   const mildUpperBound = 24;
+  const days = ["Sun", "Mon", "Tues", "Wed", "Thurs", "Fri", "Sat"];
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
   createApp({
     data() {
       return {
+        dates: [],
         cityName: 'Portlaoise',
         summaryResult: 'Hello There!',
         daySummarys: [],
-        dailyTemperatureSummary: [],
         seen: false,
         numberDays: 4,
         numberTimePeriods: 3,
         cityAndCountry: "Cork, IE",
         rainForecast: "Null",
         temperatureForecast: "Null",
-        aqiStatus: "Null"
+        aqiStatus: "Null",
+        isJoke: false,
+        setup: "Null",
+        punchline: "Null",
+        seePunchline: true
       }
     },
     methods: {
       async getWeather() {
-          try {
-            let response = await fetch(`http://localhost:3000/weather/${this.cityName}`, {
-              mode:"cors"
-            });
-            if(!response.ok) {
-              const message = `An error occurred ${response.status} - ${response.statusText}`;
-              throw new Error(message);
-            }
-            let weatherJson = await response.json();
-            console.log(weatherJson);
-            this.formatWeather(weatherJson);
-            this.seen = true;
-          } catch (error) {
-            console.log(error);
+        try {
+          let response = await fetch(`http://localhost:3000/weather/${this.cityName}`, {
+            mode:"cors"
+          });
+          if(!response.ok) {
+            const message = `An error occurred ${response.status} - ${response.statusText}`;
+            throw new Error(message);
           }
+          let weatherJson = await response.json();
+          this.formatWeather(weatherJson);
+          this.seen = true;
+        } catch (error) {
+          console.log(error);
+        }
       },
       formatWeather(weatherJson) {
         this.summaryResult = this.getSummary(weatherJson);
+        this.daySummarys = [];
+        this.dates = [];
         for(let i = 0; i < this.numberDays; i++) {
           this.daySummarys.push(this.getDailyTableItem(i, weatherJson));
+          this.dates.push(this.getDate(i))
         }
-        console.log(this.daySummarys);
+      },
+      getDate(index) {
+        const today = new Date();
+        const dayToGet = new Date(today);
+        dayToGet.setDate(dayToGet.getDate() + (index+1));
+        return `${days[dayToGet.getDay()]}, ${dayToGet.getDate()} ${months[dayToGet.getMonth()]}, ${dayToGet.getFullYear()}`
       },
       getSummary(weatherJson) {
         //Get City and Country Name
@@ -99,23 +148,18 @@
         // Determine AQI status
         this.aqiStatus = (aqiStatus) 
             ? "The Air Pollution is forecast to be high! It's recommended you wear a mask"
-            : "The Air Pollution is forecast to be low! No need for a mask going here";
+            : "The Air Pollution is forecast to be low! No need for a mask going here!";
       },
       getDailyTableItem(index, weatherJson) {
         let dayTable = [];
-        this.getTemperatureInfo(weatherJson.days[index].temperature);
-        dayTable.push(`Wind Speed: ${weatherJson.days[index].wind}km/hr`);
-        dayTable.push(`Cloud Coverage: ${weatherJson.days[index].cloud_coverage}%`);
-        dayTable.push(`Rainfall Level: ${weatherJson.days[index].rainfall}mm`);
+        dayTable.push(`Average Temperature: ${this.formatNumber(weatherJson.days[index].temperature.avg_temp)}°C`);
+        dayTable.push(`Maximum Temperature: ${this.formatNumber(weatherJson.days[index].temperature.max_temp)}°C`);
+        dayTable.push(`Minimum Temperature: ${this.formatNumber(weatherJson.days[index].temperature.min_temp)}°C`);
+        dayTable.push(`Humidity: ${this.formatNumber(weatherJson.days[index].temperature.humidity)}%`);
+        dayTable.push(`Wind Speed: ${this.formatNumber(weatherJson.days[index].wind)} km/hr`);
+        dayTable.push(`Cloud Coverage: ${this.formatNumber(weatherJson.days[index].cloud_coverage)}%`);
+        dayTable.push(`Rainfall Level: ${this.formatNumber(weatherJson.days[index].rainfall)}mm`);
         return dayTable;
-      },
-      getTemperatureInfo(temperature) {
-        let temperatureInfo = [];
-        temperatureInfo.push(`Average Temperature: ${temperature.avg_temp}°C`);
-        temperatureInfo.push(`Maximum Temperature: ${temperature.max_temp}°C`);
-        temperatureInfo.push(`Minimum Temperature: ${temperature.min_temp}°C`);
-        temperatureInfo.push(`Humidity: ${temperature.humidity}%`);
-        this.dailyTemperatureSummary = temperatureInfo;
       },
       isRain(weatherJson) {
         for(let i = 0; i < this.numberDays; i++) {
@@ -139,7 +183,22 @@
       },
       getCityAndCountry(weatherJson) {
         return weatherJson.city_and_country;
-      }
+      },
+      formatNumber(number) {
+        return parseFloat(number).toFixed(2);
+      },
+      async getJoke() {
+        try {
+          const joke = await fetch(`http://localhost:3000/the/best/jokes`);
+          const jokeJson = await joke.json();
+          this.setup = jokeJson.setup
+          this.punchline = jokeJson.punchline
+          this.isJoke = true;
+          this.seePunchline = false;
+        } catch (error) {
+          console.log(error);
+        }
+      },
     }
   }).mount('#app');
 </script>

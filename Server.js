@@ -94,7 +94,7 @@ const getWindInfo = (index, weatherJson) => {
         if(i === (index+numEntriesPerDay)-1)
             windSpeed /= numEntriesPerDay;
     }
-    return (((windSpeed*1000)/60)/60)
+    return (((windSpeed*1000)/60))
 }
 
 // Get Weather Information
@@ -200,6 +200,24 @@ application.get("/weather/:cityName", cors(), async (req, res) => {
     } catch (err) {
         console.log(err);
         res.status(500).json({msg: `Internal Server Error.`});    
+    }
+});
+
+// Server Endpoint for Jokes
+application.get("/the/best/jokes", cors(), async (req, res) => {
+    try {
+        console.log("Prepare to Laugh");
+        const joke = 
+            await fetch(`https://official-joke-api.appspot.com/random_joke`);
+        const jokeJson = await joke.json();
+        const jokeMap = new Map();
+        jokeMap.set("setup", jokeJson.setup);
+        jokeMap.set("punchline", jokeJson.punchline);
+        res.status(200).json(toJson(jokeMap));
+        console.log("Laugh Package has been sent");
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({msg: `Internal Server Error.`});
     }
 });
 

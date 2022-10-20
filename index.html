@@ -2,20 +2,51 @@
 <link rel="stylesheet" href="./styles/button.css">
 <link rel="stylesheet" href="./styles/input.css">
 <link rel="stylesheet" href="./styles/styles.css">
+<link rel="stylesheet" href="./styles/rain-icon.css">
+<link rel="stylesheet" href="./styles/sun-icon.css">
 
 <body>
   <div id="app">
     <h1 class="headers">Weather Finder Outer</h1><br>
-    <div class="box-div">
-      <p class="p1"><br>This is a weather app that returns information for the weather forecast over the next 5 days of a chosen city<br>
-        <br>
-        Please enter the name of the city below and press the <strong>ENTER</strong> key when finished<br>
-        <br>
+    <div class="header-box">
+      <div class="rain-icon rain-box">
+        <div class="rain">
+          <span style="--i:11"></span>
+          <span style="--i:12"></span>
+          <span style="--i:15"></span>
+          <span style="--i:17"></span>
+          <span style="--i:18"></span>
+          <span style="--i:13"></span>
+          <span style="--i:14"></span>
+          <span style="--i:19"></span>
+          <span style="--i:20"></span>
+          <span style="--i:10"></span>
+          <span style="--i:18"></span>
+          <span style="--i:13"></span>
+          <span style="--i:14"></span>
+          <span style="--i:19"></span>
+          <span style="--i:20"></span>
+          <span style="--i:10"></span>
+          <span style="--i:18"></span>
+          <span style="--i:13"></span>
+          <span style="--i:14"></span>
+          <span style="--i:19"></span>
+          <span style="--i:20"></span>
+          <span style="--i:10"></span>
+        </div>
+      </div>
+      <div class="box-div">
+        <p class="p1"><br>This is a weather app that returns information for the weather forecast over the next 5 days of a chosen city<br>
+          <br>
+          Please enter the name of the city below and press the <strong>ENTER</strong> key when finished<br>
+          <br>
+      </div>
+      <div class="the-sun sun-box"></div>
     </div>
     <br>
     <input v-model="cityName" @keyup.enter="getWeather" class="input"><br>
     <div>
-      <template v-if="seen" id="container">
+      <template v-if="seen">
         <br>
         <h2 class="headers">{{ cityAndCountry }}</h2>
         <br>
@@ -31,7 +62,7 @@
           </div>
         </div>
 
-        <h2 class="h2">The Summary Forecast for each day is:</h2>
+        <h2 class="h2">The Forecast for each day is:</h2>
         <div class="wrapper">
           <ul v-for="(item, index) in daySummarys" class="p1">
             <div class="box-div2">
@@ -66,6 +97,11 @@
           <br>
         <div>
       </template>
+      <template v-if="isError">
+        <div class="box-div">
+          <p>An Invalid City Name has been entered. Please Try Again!</p>
+        </div>
+      </template>
     </div>
   </div>
 </body>
@@ -94,7 +130,8 @@
         isJoke: false,
         setup: "Null",
         punchline: "Null",
-        seePunchline: true
+        seePunchline: true,
+        isError: false
       }
     },
     methods: {
@@ -105,11 +142,15 @@
           });
           if(!response.ok) {
             const message = `An error occurred ${response.status} - ${response.statusText}`;
+            this.seen = false;
+            this.isError = true;
             throw new Error(message);
           }
           let weatherJson = await response.json();
           this.formatWeather(weatherJson);
           this.seen = true;
+          this.isJoke = false;
+          this.isError = false;
         } catch (error) {
           console.log(error);
         }

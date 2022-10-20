@@ -1,0 +1,21 @@
+.the-sun {
+    position: absolute;
+    opacity: 1;
+    box-shadow: 0px 0px 15px 3px yellow;
+    width: 100px;
+    height: 100px;
+    top: 16vh;
+    left: 160vh;
+    animation: sunpulse 2s alternate infinite;
+    border-radius: 50%;
+    background-image: radial-gradient(circle, #ffd210, 95%, #f7970e);
+}
+
+@keyframes sunpulse {
+    from {
+        box-shadow: 0 0 100px #ff0 0 100px #ff0;
+    }
+    to {
+        box-shadow: 0 0 25px #ff0 0 75px #ff0;
+    }
+}

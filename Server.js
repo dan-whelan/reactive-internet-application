@@ -20,8 +20,21 @@ const weatherMap = new Map();
 // Take Json from openweather and convert to Response Map
 const formatWeatherJson = async (weatherJson, aqiJson) => {
     const weatherArray = [];
+    const today = new Date()
+    const tomorrow = new Date(today)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    tomorrow.setHours(0, 0, 0, 0)
+    const cutOffTime = (tomorrow.getTime()/1000)
+    let cutOffIndex;
+    for(let i = 0; i < numEntriesPerDay; i++) {
+        if(weatherJson.list[i].dt >= cutOffTime) {
+            console.log("here")
+            cutOffIndex = i;
+            break;
+        }
+    }
     let index = 0;
-    for(let i = 0; i < numEntriesInAllDays; i += numEntriesPerDay) {
+    for(let i = cutOffIndex; i < (numEntriesInAllDays+cutOffIndex); i += numEntriesPerDay) {
         weatherArray[index] = toJson(getDailyInfo(i, weatherJson));
         index++;
     }
